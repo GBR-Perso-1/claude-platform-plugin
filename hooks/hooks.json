@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "InstructionsLoaded": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/log-instructions-loaded.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}

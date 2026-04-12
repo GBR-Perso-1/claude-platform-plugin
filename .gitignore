@@ -1,0 +1,17 @@
+# Sensitive / local config
+local.settings.json
+token_dev.txt
+token_prod.txt
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.tmp/
+.temp/
+
+# Claude Code local
+.claude/settings.local.json
+.claude/instructions-loaded.log
+.temp/
+
+*draft.md

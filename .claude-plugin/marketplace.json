@@ -1,0 +1,14 @@
+{
+  "name": "gbr-perso",
+  "owner": {
+    "name": "Brourhant Guillaume"
+  },
+  "plugins": [
+    {
+      "name": "platform",
+      "source": "./",
+      "description": "Platform tooling — clone repos, provision Azure users, security scanning, Azure monitoring and health helpers.",
+      "version": "1.0.0"
+    }
+  ]
+}
