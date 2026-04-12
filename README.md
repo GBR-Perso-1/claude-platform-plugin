@@ -4,10 +4,10 @@ Claude Code plugin providing AI-assisted platform tooling — repo management, A
 
 ## What's included
 
-| Component | Items |
-|---|---|
-| **Skills** | *(coming soon)* `repo-clone`, `azure-provision-user`, `git-security-scan`, `azure-monitor`, `azure-health` |
-| **Hooks** | `InstructionsLoaded` — logs loaded instruction files to `.claude/instructions-loaded.log` |
+| Component  | Items                                                                                                      |
+| ---------- | ---------------------------------------------------------------------------------------------------------- |
+| **Skills** | _(coming soon)_ `repo-clone`, `azure-provision-user`, `git-security-scan`, `azure-monitor`, `azure-health` |
+| **Hooks**  | `InstructionsLoaded` — logs loaded instruction files to `.claude/instructions-loaded.log`                  |
 
 ---
 
