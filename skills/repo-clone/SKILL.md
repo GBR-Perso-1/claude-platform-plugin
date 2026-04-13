@@ -32,7 +32,7 @@ And **stop**.
 
 ### `perso` — GitHub user (SSH)
 
-- **Clone URL**: `git@github-perso:azuregbr/<repo-name>.git`
+- **Clone URL**: `git@github-perso:GBR-Perso-1/<repo-name>.git`
 
 ### `mantu` — Azure DevOps (HTTPS)
 
