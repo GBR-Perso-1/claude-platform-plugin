@@ -5,6 +5,19 @@
     },
   ],
   "settings": {
-    ,
+    "workbench.colorCustomizations": {
+      "commandCenter.border": "#e7e7e799",
+      "sash.hoverBorder": "#9a0e0e",
+      "statusBar.background": "#6b0a0a",
+      "statusBar.foreground": "#e7e7e7",
+      "statusBarItem.hoverBackground": "#9a0e0e",
+      "statusBarItem.remoteBackground": "#6b0a0a",
+      "statusBarItem.remoteForeground": "#e7e7e7",
+      "titleBar.activeBackground": "#6b0a0a",
+      "titleBar.activeForeground": "#e7e7e7",
+      "titleBar.inactiveBackground": "#6b0a0a99",
+      "titleBar.inactiveForeground": "#e7e7e799",
+    },
+    "peacock.color": "#6B0A0A",
   },
 }
