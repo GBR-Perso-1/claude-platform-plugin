@@ -80,13 +80,15 @@ Run `git ls-files` inside `SCAN_ROOT`. If it fails (not a git repo), fall back t
 
 For **deep mode**: after collecting grep hits, for each file with at least one hit, use the `Read` tool to read the full file. Confirm the finding in context. Downgrade confidence from `high` to `medium` if the value appears to be a placeholder (`<your-api-key>`, `TODO`, `changeme`, `example`, `xxx`, `test`).
 
-### Deep mode only — `.gitignore` cross-reference
+### `.gitignore` cross-reference (both modes — config files only)
 
-For any finding in a config file (`.env*`, `*.tfvars`, `appsettings*.json`), check whether that file is gitignored:
+For any finding whose file is a config file (`.env*`, `*.tfvars`, `appsettings*.json`), check whether that file is gitignored:
 ```bash
 git -C <SCAN_ROOT> check-ignore -q <file-path> && echo "IGNORED" || echo "TRACKED"
 ```
-If `IGNORED`: downgrade severity by one level (Critical→High, High→Medium, Medium→Low). Add to `description`: `File is listed in .gitignore but was found via git ls-files — may indicate a historical commit or misconfigured ignore.`
+If `IGNORED`: downgrade severity by one level (Critical→High, High→Medium, Medium→Low). Add to `description`: `File is listed in .gitignore but was found via git ls-files — may indicate a historical commit or misconfigured ignore. Verify with: git log --all -- <file-path>`
+
+If `TRACKED` and the `.gitignore` contains a pattern that *should* match this file but doesn't (e.g. covers `terraform-credentials.ps1` but not `terraform-credentials-prod.ps1`), note the gap in `description`: `The .gitignore pattern does not cover this filename variant — file is actively tracked.` Keep the original severity.
 
 ## Phase 3 — Output
 
