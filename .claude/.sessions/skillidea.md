@@ -1,11 +1,10 @@
-agent that write foramte repot
-security agent
 gdpr agent
+
 techincal deb agent
 
-skill to scan a repot for secuit ruisk techniba debl perfromat bottleneck
+skill to scan a repot for techniba debl
 
-skille that debug github/repot plys azure to find likely bug
+skill to debug send the error message the source repo and try to find the likely issue
 
 increate global azure monitoring starging with appignisg app heatld and increasing
 
