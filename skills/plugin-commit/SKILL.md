@@ -9,10 +9,12 @@ Walk each folder in a VS Code `.code-workspace` file, find the plugin repos that
 
 Read and follow the rules in `${CLAUDE_PLUGIN_ROOT}/skills/shared/_ux-rules.md`.
 
+Read and follow the context resolution contract in `${CLAUDE_PLUGIN_ROOT}/skills/shared/_context-resolution.md`.
+
 ## Arguments
 
 - `$ARGUMENTS` (optional): path to a `.code-workspace` file.
-- Default if empty: `C:\Workspace\Dev\Code.Workspace\claude-plugin.code-workspace`.
+- Default if empty: ask the user via `AskUserQuestion` to enter the workspace file path. Do **not** use any hardcoded default path.
 
 ## Steps
 
@@ -31,11 +33,22 @@ For each kept folder, run in parallel across folders (one set of commands per fo
 ```bash
 git -C "<folder>" status --short
 git -C "<folder>" diff HEAD --stat
+git -C "<folder>" remote get-url origin
 ```
 
 Read `<folder>/.claude-plugin/plugin.json` to get the current `version`.
 
 **Skip repos where `git status --short` is empty** — nothing to commit there.
+
+**Context resolution per repo (R.2–R.3)**
+
+For each dirty repo, apply the context resolution contract using the repo folder as the effective cwd:
+
+1. Look up the folder path against `path_globs` in the manifest (R.2).
+2. If a context is resolved and it declares `ssh_alias`, verify that the push remote URL uses that alias (i.e. the origin URL contains `git@<ssh_alias>:`).
+   - **Match**: proceed silently.
+   - **Mismatch**: record a mismatch for this repo — it will be surfaced in the batch confirmation (Step 4) as a warning. Do not auto-rewrite the remote.
+3. If no context matches (no manifest or no path_glob match), proceed without a context check for that repo.
 
 ### 3. Auto-detect bump + commit message per dirty repo
 
@@ -66,16 +79,24 @@ Prefer concrete names over generic verbs. Keep under ~60 chars.
 
 If no dirty plugin repos: print `No plugin repos have changes. Nothing to do.` and stop.
 
-Otherwise use `AskUserQuestion`. Put the full plan in the **question text** as a table, e.g.:
+Otherwise use `AskUserQuestion`. Put the full plan in the **question text** as a table. Group repos by resolved context. Surface any remote URL mismatches as warnings in the question text. For example:
 
 ```
 Found N plugin repo(s) with changes:
 
+Context: rise-qa (ssh_alias: github-rise)
+  repo                          bump     old → new     message
+  ----------------------------- -------- ------------- ---------------------------
+  it--claude-rise-plugin        patch    1.1.0 → 1.1.1 Update migrate-workflows skill
+
+Context: perso (ssh_alias: github-perso)
   repo                          bump     old → new     message
   ----------------------------- -------- ------------- ---------------------------
   claude-platform-plugin        minor    1.2.0 → 1.3.0 Add plugin-commit skill
-  it--claude-rise-plugin        patch    1.1.0 → 1.1.1 Update migrate-workflows skill
-  ...
+
+⚠ Remote URL mismatch (N repo(s)):
+  <repo>: origin uses <actual-alias> but manifest declares <expected-alias>
+  These repos will be pushed as-is — fix remotes manually if needed.
 
 Commit and push each independently on `main`?
 ```
