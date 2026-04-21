@@ -1,5 +1,5 @@
 ---
-name: scan-orphan-appregs
+name: az-scan-orphan-appregs
 description: Scan an Azure tenant for potentially orphaned Entra ID app registrations. Classifies each app as Confirmed orphan, Likely orphan, or Active, then writes a JSON report to .claude/orphan-scan.json for review or deletion via /purge-orphan-appregs.
 ---
 

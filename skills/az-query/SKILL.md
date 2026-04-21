@@ -1,5 +1,5 @@
 ---
-name: infra-azure-query
+name: az-query
 description: "Read-only Azure lookups (app registrations, groups, Key Vault, resources) using natural language. Supports tenant-based credential files and optional naming conventions."
 ---
 

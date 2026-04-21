@@ -1,5 +1,5 @@
 ---
-name: purge-orphan-appregs
+name: az-purge-orphan-appregs
 description: "DESTRUCTIVE. Reads the orphan scan report produced by /scan-orphan-appregs and permanently deletes the listed app registrations from Entra ID. Always shows a full deletion list and requires explicit confirmation before touching anything."
 ---
 
