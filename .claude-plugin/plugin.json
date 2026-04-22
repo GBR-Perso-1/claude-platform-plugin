@@ -1,6 +1,6 @@
 {
   "name": "platform",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Platform tooling — clone repos, provision Azure users, security scanning, Azure monitoring and health helpers, dev settings injection.",
   "skills": "./skills/"
 }
