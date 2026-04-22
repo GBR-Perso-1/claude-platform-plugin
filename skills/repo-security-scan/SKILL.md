@@ -1,5 +1,5 @@
 ---
-name: security-scan
+name: repo-security-scan
 description: "Scan a Rise repository for secrets, injection vulnerabilities, and exposure risks. Produces a unified read-only security report using three parallel scanner agents."
 ---
 
@@ -26,6 +26,7 @@ target:  (omitted) → current directory
 ```
 
 **Parsing rules:**
+
 - No arguments → `surface` depth, current directory.
 - First token is exactly `surface` or `deep` → that is the depth; remainder is the target (empty = current directory).
 - First token is neither `surface` nor `deep` → depth defaults to `surface`; all tokens form the target.
@@ -48,6 +49,7 @@ Security Scan
 ### Step 0.2 — Local mode: verify target exists
 
 If the target directory does not exist, stop immediately:
+
 ```
 Target directory not found: <path>
 Provide a valid path or omit the target to scan the current directory.
@@ -56,6 +58,7 @@ Provide a valid path or omit the target to scan the current directory.
 ### Step 0.3 — File count guard
 
 Run from the target directory:
+
 ```bash
 git ls-files | wc -l
 ```
@@ -63,13 +66,14 @@ git ls-files | wc -l
 Apply these thresholds:
 
 | Mode    | Warn threshold | Hard stop threshold |
-|---------|----------------|---------------------|
+| ------- | -------------- | ------------------- |
 | surface | >500 files     | >2,000 files        |
 | deep    | >200 files     | >1,000 files        |
 
 **Hard stop** — print and do NOT proceed:
 
 In **deep mode**:
+
 ```
 Hard stop: this repository contains N tracked files, which exceeds the deep mode limit of <threshold>.
 
@@ -79,6 +83,7 @@ Options:
 ```
 
 In **surface mode**:
+
 ```
 Hard stop: this repository contains N tracked files, which exceeds the surface mode limit of <threshold>.
 
@@ -87,6 +92,7 @@ Options:
 ```
 
 **Warn** — print and continue:
+
 ```
 Warning: N tracked files detected. Scan may take longer and consume significant tokens.
 Proceeding with <mode> scan.
@@ -95,20 +101,25 @@ Proceeding with <mode> scan.
 ### Step 0.4 — Remote mode only
 
 a. Check `gh` CLI: run `gh --version`. If not found, stop:
+
 ```
 gh CLI is required for remote scans. Install it from https://cli.github.com and authenticate with: gh auth login
 ```
 
 b. Check authentication: run `gh auth status`. If not authenticated, stop:
+
 ```
 Not authenticated with gh CLI. Run: gh auth login
 ```
 
 c. Check repo disk size:
+
 ```bash
 gh repo view Rise-4/<repo-name> --json diskUsage --jq '.diskUsage'
 ```
+
 Value is in kilobytes. If `diskUsage / 1024 > 150`, stop:
+
 ```
 Remote repo size check failed: Rise-4/<repo-name> is approximately <N> MB on disk.
 Maximum allowed size for cloning is 150 MB.
@@ -116,15 +127,18 @@ Consider scanning a specific subdirectory after a manual clone.
 ```
 
 d. Clone:
+
 ```bash
 TEMP_DIR="/tmp/security-scan-<repo-name>-$(date +%s)"
 gh repo clone Rise-4/<repo-name> "$TEMP_DIR"
 ```
+
 Set `SCAN_ROOT="$TEMP_DIR"`.
 
 ### Step 0.5 — Stack detection
 
 Check for indicator files in `SCAN_ROOT`:
+
 - `**/*.csproj` or `**/*.sln` → `dotnet`
 - `**/package.json` → `node`
 - `**/vite.config.*` or `**/vue.config.*` → `vue`
@@ -141,6 +155,7 @@ Assemble `STACK_HINT` as a comma-separated string (e.g. `dotnet,vue`).
 > Note: agent files live in `${CLAUDE_PLUGIN_ROOT}/agents/`. If the plugin runtime does not auto-discover this directory, move agent files to `skills/security-scan/agents/` and update names accordingly.
 
 Spawn all three scanner agents in parallel, passing `SCAN_ROOT`, `SCAN_DEPTH`, and `STACK_HINT`:
+
 - `scanner-secrets`
 - `scanner-injection`
 - `scanner-exposure`
@@ -158,6 +173,7 @@ Parse all findings from the three agent outputs using the standard schema (agent
 ### Step 2.2 — Deduplicate
 
 Key: `file + line`. If two agents report the same file+line:
+
 - Keep the entry with higher severity.
 - Set `agent` to note both sources (e.g. `secrets+exposure`).
 - If severities are equal, keep the entry with higher confidence.
@@ -182,7 +198,7 @@ Key: `file + line`. If two agents report the same file+line:
 ## Summary
 
 | Severity | Count |
-|----------|-------|
+| -------- | ----- |
 | Critical | {n}   |
 | High     | {n}   |
 | Medium   | {n}   |
@@ -197,16 +213,19 @@ Key: `file + line`. If two agents report the same file+line:
 
 ### Critical
 
-| # | Agent | File | Line | Title | Description | Confidence | Impact | Fix |
-|---|-------|------|------|-------|-------------|------------|--------|-----|
+| #   | Agent | File | Line | Title | Description | Confidence | Impact | Fix |
+| --- | ----- | ---- | ---- | ----- | ----------- | ---------- | ------ | --- |
 
 ### High
+
 _(same table structure)_
 
 ### Medium
+
 _(same table structure)_
 
 ### Low
+
 _(same table structure)_
 
 ---
@@ -214,10 +233,10 @@ _(same table structure)_
 ## Agent Coverage
 
 | Agent     | Patterns Run | Findings | Truncated? |
-|-----------|-------------|----------|------------|
-| Secrets   | {n}         | {n}      | Yes / No   |
-| Injection | {n}         | {n}      | Yes / No   |
-| Exposure  | {n}         | {n}      | Yes / No   |
+| --------- | ------------ | -------- | ---------- |
+| Secrets   | {n}          | {n}      | Yes / No   |
+| Injection | {n}          | {n}      | Yes / No   |
+| Exposure  | {n}          | {n}      | Yes / No   |
 
 ---
 
