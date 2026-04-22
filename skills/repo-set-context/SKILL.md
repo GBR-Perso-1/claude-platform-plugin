@@ -1,5 +1,5 @@
 ---
-name: contexts
+name: repo-set-context
 description: "Manage the user-level contexts.json manifest — create, validate, sync, and add context entries that describe your GitHub/Azure accounts."
 ---
 
@@ -15,12 +15,12 @@ Read and follow the schema in `${CLAUDE_PLUGIN_ROOT}/skills/shared/_contexts-sch
 
 `$ARGUMENTS` — first token is the subcommand. Valid subcommands:
 
-| Subcommand | Usage |
-|------------|-------|
-| `init` | Walk through creating or augmenting the manifest interactively |
-| `check` | Validate the manifest against observable reality (read-only) |
-| `sync` | Apply mutable reconciliation with explicit per-change confirmation |
-| `add <name>` | Append a single new context entry interactively |
+| Subcommand   | Usage                                                              |
+| ------------ | ------------------------------------------------------------------ |
+| `init`       | Walk through creating or augmenting the manifest interactively     |
+| `check`      | Validate the manifest against observable reality (read-only)       |
+| `sync`       | Apply mutable reconciliation with explicit per-change confirmation |
+| `add <name>` | Append a single new context entry interactively                    |
 
 If `$ARGUMENTS` is empty or the subcommand is not one of the above, print:
 
@@ -58,6 +58,7 @@ Select an action:
 ```
 
 Options:
+
 1. Add a new context entry
 2. Edit an existing entry (only if entries exist)
 3. Done — save and exit
@@ -71,24 +72,25 @@ If **Cancel**: discard all unsaved changes and stop.
 
 For each new context, collect fields via `AskUserQuestion` one at a time. Every field except `name` and `path_globs` offers a "Skip" option.
 
-| Field | Prompt |
-|-------|--------|
-| `name` | Short context identifier (required — no skip) |
-| `path_globs` | One or more glob patterns for matching cwd (required — no skip; accept comma-separated list) |
-| `github_org` | GitHub organisation slug (e.g. `Rise-4`) — skip if personal or ADO |
-| `github_user` | GitHub personal account slug — skip if org or ADO |
-| `ssh_alias` | SSH host alias from `~/.ssh/config` (e.g. `github-rise`) |
-| `commit_email` | Git commit email for this context |
-| `azure_tenant_id` | Azure / Entra tenant GUID |
-| `azure_subscriptions` | Environment → subscription GUID pairs (accept as `qa=<guid>,prod=<guid>`) |
-| `azure_env_file_prefix` | Prefix for local Azure env files (e.g. `rise-env`) |
-| `dev_settings_repo` | Dev-settings repository name (e.g. `it--dev-settings`) |
-| `dev_settings_owner` | Owner of the dev-settings repo |
-| `dev_settings_admin` | Name of the platform admin |
-| `ado_org_url` | Azure DevOps organisation URL |
-| `app_template_path` | Absolute path to the local app template clone |
+| Field                   | Prompt                                                                                       |
+| ----------------------- | -------------------------------------------------------------------------------------------- |
+| `name`                  | Short context identifier (required — no skip)                                                |
+| `path_globs`            | One or more glob patterns for matching cwd (required — no skip; accept comma-separated list) |
+| `github_org`            | GitHub organisation slug (e.g. `Rise-4`) — skip if personal or ADO                           |
+| `github_user`           | GitHub personal account slug — skip if org or ADO                                            |
+| `ssh_alias`             | SSH host alias from `~/.ssh/config` (e.g. `github-rise`)                                     |
+| `commit_email`          | Git commit email for this context                                                            |
+| `azure_tenant_id`       | Azure / Entra tenant GUID                                                                    |
+| `azure_subscriptions`   | Environment → subscription GUID pairs (accept as `qa=<guid>,prod=<guid>`)                    |
+| `azure_env_file_prefix` | Prefix for local Azure env files (e.g. `rise-env`)                                           |
+| `dev_settings_repo`     | Dev-settings repository name (e.g. `it--dev-settings`)                                       |
+| `dev_settings_owner`    | Owner of the dev-settings repo                                                               |
+| `dev_settings_admin`    | Name of the platform admin                                                                   |
+| `ado_org_url`           | Azure DevOps organisation URL                                                                |
+| `app_template_path`     | Absolute path to the local app template clone                                                |
 
 Validate:
+
 - `name` must be non-empty and not already in the manifest (case-insensitive).
 - `path_globs` must contain at least one non-empty pattern.
 - `github_org` and `github_user` must not both be set — if the user provides both, explain the constraint and re-prompt.
@@ -201,6 +203,7 @@ Apply?
 ```
 
 Options:
+
 1. Apply this change
 2. Skip this change
 3. Cancel all remaining changes
