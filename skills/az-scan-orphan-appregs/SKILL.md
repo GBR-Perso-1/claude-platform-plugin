@@ -78,25 +78,60 @@ Check whether the display name matches the pattern: contains a segment that look
 - `guid_in_name: true` if a UUID-shaped segment is found in the name.
 - `guid_in_name: false` otherwise.
 
+#### Check D — QA environment suffix
+
+Check whether the display name ends with `qa` followed by one or more digits (case-insensitive), e.g. `qa01`, `qa02`, `qa03`.
+
+- `qa_suffix: true` if the name matches `.*qa\d+$` (case-insensitive).
+- `qa_suffix: false` otherwise.
+
+These registrations are provisioned by Terraform as part of QA environment scaffolding. They may have no credentials or sign-in history yet still be legitimate — a human must review them before any deletion.
+
 #### Classification logic
+
+> **Note on `signInActivity`:** `az ad sp show` only returns `signInActivity` on tenants with Entra ID P1/P2 and sufficient audit-log permissions. When unavailable, `last_sign_in` is `null` for all apps — this means "data not available", not "never used". Valid credentials are the primary signal of active use; absent sign-in data must not be treated as evidence of inactivity.
+
+Evaluate rules in order — first match wins.
 
 | Conditions | Classification |
 |---|---|
-| `sp_exists: false` | `confirmed_orphan` — nothing can authenticate with this registration |
-| `sp_exists: true` AND `has_valid_creds: false` AND `guid_in_name: true` | `confirmed_orphan` — auto-generated, no usable credentials |
-| `sp_exists: true` AND `has_valid_creds: false` AND `last_sign_in: null` | `likely_orphan` — no credentials, never signed in |
-| `sp_exists: true` AND `has_valid_creds: false` AND `last_sign_in` older than 180 days | `likely_orphan` — credentials expired, inactive |
-| `guid_in_name: true` AND `has_valid_creds: false` | `likely_orphan` — auto-generated name, no active credentials |
-| `sp_exists: true` AND `has_valid_creds: true` AND `last_sign_in` within 180 days | `active` |
+| `sp_exists: false` AND `qa_suffix: false` | `confirmed_orphan` — nothing can authenticate with this registration |
+| `sp_exists: true` AND `has_valid_creds: false` AND `guid_in_name: true` AND `qa_suffix: false` | `confirmed_orphan` — auto-generated name, no usable credentials |
+| `sp_exists: true` AND `has_valid_creds: true` | `active` — live credentials indicate intentional use; sign-in data may be unavailable |
+| `sp_exists: true` AND `has_valid_creds: true` AND `last_sign_in` within 180 days | `active` — valid credentials, recently used |
+| `qa_suffix: true` | `unlikely_orphan` — Terraform-managed QA environment; legitimate even without credentials or sign-in history |
+| `sp_exists: true` AND `has_valid_creds: false` AND `last_sign_in` older than 180 days | `likely_orphan` — credentials expired and confirmed inactive |
+| `sp_exists: true` AND `has_valid_creds: false` AND `last_sign_in: null` | `likely_orphan` — no credentials and no sign-in history |
 | Anything else not covered above | `likely_orphan` |
 
 ---
 
-### Step 4 — Write report file
+### Step 4 — Write report files
 
-Write the results to `.claude/orphan-scan.json` relative to the repo root. Overwrite any previous scan.
+Write two files to `.claude/` relative to the repo root. Overwrite any previous scan.
 
-The JSON structure must be:
+Each app entry uses this structure:
+
+```json
+{
+  "name": "risekyribabibearqa03",
+  "appId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "createdDateTime": "2026-04-16T10:00:00Z",
+  "classification": "confirmed_orphan",
+  "sp_exists": false,
+  "has_valid_creds": false,
+  "last_sign_in": null,
+  "guid_in_name": false,
+  "qa_suffix": false,
+  "reason": "No service principal — cannot be used by any application or identity"
+}
+```
+
+Fill `reason` with a human-readable explanation matching the classification logic above.
+
+#### File 1 — `.claude/orphan-scan-confirmed.json` (confirmed orphans — input for purge skill)
+
+Contains only `confirmed_orphan` apps. The user may also move entries from the review file into this file before running the purge skill.
 
 ```json
 {
@@ -104,29 +139,34 @@ The JSON structure must be:
   "tenant_id": "<tenantId from preflight>",
   "subscription_id": "<subscriptionId from preflight>",
   "prefix_filter": "<prefix used>",
+  "note": "These registrations are confirmed orphans. You may also move entries from orphan-scan-review.json into this file. Run /purge-orphan-appregs to delete.",
   "summary": {
     "total": 0,
-    "confirmed_orphan": 0,
-    "likely_orphan": 0,
-    "active": 0
+    "confirmed_orphan": 0
   },
-  "apps": [
-    {
-      "name": "risekyribabibearqa03",
-      "appId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-      "createdDateTime": "2026-04-16T10:00:00Z",
-      "classification": "confirmed_orphan",
-      "sp_exists": false,
-      "has_valid_creds": false,
-      "last_sign_in": null,
-      "guid_in_name": false,
-      "reason": "No service principal — cannot be used by any application or identity"
-    }
-  ]
+  "apps": [ ]
 }
 ```
 
-Fill `reason` with a human-readable explanation matching the classification logic above.
+#### File 2 — `.claude/orphan-scan-review.json` (needs human review)
+
+Contains only `likely_orphan` and `unlikely_orphan` apps, sorted so `unlikely_orphan` entries appear first.
+
+```json
+{
+  "scanned_at": "<ISO 8601 timestamp>",
+  "tenant_id": "<tenantId from preflight>",
+  "subscription_id": "<subscriptionId from preflight>",
+  "prefix_filter": "<prefix used>",
+  "note": "Review these registrations. Move any confirmed orphans into orphan-scan-confirmed.json, then run /purge-orphan-appregs. unlikely_orphan entries are Terraform-managed QA environments and are probably legitimate.",
+  "summary": {
+    "total": 0,
+    "likely_orphan": 0,
+    "unlikely_orphan": 0
+  },
+  "apps": [ ]
+}
+```
 
 ---
 
@@ -138,18 +178,26 @@ Print a summary table grouped by classification:
 Scan complete — <N> app registrations analysed.
 
 CONFIRMED ORPHAN (<N>)
-  risekyribabibearqa03          | no service principal
-  Rise4-EstateHub-9673eb47-...  | auto-generated name, expired credentials
+  risekyribabibearqa03               | no service principal
+  Rise4-EstateHub-9673eb47-...       | auto-generated name, no usable credentials
 
 LIKELY ORPHAN (<N>)
-  risekyribabibearqa01          | expired credentials, last sign-in > 180 days ago
+  riseestatehubbeardev09             | no credentials and no sign-in history
+
+UNLIKELY ORPHAN (<N>) — Terraform QA environments, probably legitimate
+  riseairfarebearqa01                | QA suffix, no credentials — likely Terraform-managed
+  riseestatehubbearqa01              | QA suffix, no credentials — likely Terraform-managed
 
 ACTIVE (<N>)
-  risekyribabibearqa04          | valid credentials, signed in recently
+  riseappdevbeappregdev01            | valid credentials
 
-Report saved to: .claude/orphan-scan.json
+Reports saved to:
+  .claude/orphan-scan-confirmed.json (confirmed orphans — input for /purge-orphan-appregs)
+  .claude/orphan-scan-review.json    (likely + unlikely orphans — needs review)
 
-Review the file, then run /purge-orphan-appregs to delete the orphans.
+Next steps:
+  1. Review orphan-scan-review.json and move any additional orphans into orphan-scan-confirmed.json.
+  2. Run /purge-orphan-appregs to delete everything in orphan-scan-confirmed.json.
 ```
 
 Do not delete anything. This skill is read-only.

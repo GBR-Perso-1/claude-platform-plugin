@@ -7,7 +7,7 @@ description: "DESTRUCTIVE. Reads the orphan scan report produced by /scan-orphan
 
 Delete orphaned Entra ID app registrations identified by a previous `/scan-orphan-appregs` run.
 
-`$ARGUMENTS` is optional. If provided, treat it as the path to the scan JSON file. Default: `.claude/orphan-scan.json` relative to the repo root.
+`$ARGUMENTS` is optional. If provided, treat it as the path to the scan JSON file. Default: `.claude/orphan-scan-confirmed.json` relative to the repo root.
 
 ---
 
@@ -32,7 +32,7 @@ Read the file at the path determined above. If it does not exist, halt:
 
 ```
 Scan file not found: <path>
-Run /scan-orphan-appregs first to generate it.
+Run /scan-orphan-appregs first, then review orphan-scan-review.json and move any additional orphans into orphan-scan-confirmed.json.
 ```
 
 Parse the JSON. Extract:
@@ -89,7 +89,7 @@ Otherwise, print the full deletion list grouped by classification. Use clear for
 The following Entra ID app registrations will be PERMANENTLY DELETED.
 This cannot be undone.
 
-Scan file:  .claude/orphan-scan.json
+Scan file:  .claude/orphan-scan-confirmed.json
 Scanned at: <scanned_at>
 Tenant:     <tenant_id>
 
@@ -180,5 +180,5 @@ If all deletions succeeded, also print:
 
 ```
 You can safely delete the scan file:
-  .claude/orphan-scan.json
+  .claude/orphan-scan-confirmed.json
 ```
