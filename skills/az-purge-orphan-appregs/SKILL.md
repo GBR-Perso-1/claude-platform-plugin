@@ -13,16 +13,9 @@ Delete orphaned Entra ID app registrations identified by a previous `/scan-orpha
 
 ### Step 1 — Preflight
 
-#### 1a — Verify az CLI
+#### 1a — Authentication
 
-```powershell
-az account show --query "{name:name, tenantId:tenantId, subscriptionId:id}" -o json
-```
-
-If this fails, halt:
-```
-az CLI is not authenticated. Run: az login
-```
+Follow the steps in `${CLAUDE_PLUGIN_ROOT}/skills/shared/_az-auth.md`. Complete that flow fully before continuing.
 
 Print the active account name and tenant ID. The user must verify this matches the tenant they scanned.
 

@@ -11,18 +11,9 @@ Scan the current Azure tenant for orphaned app registrations and write a report 
 
 ---
 
-### Step 1 — Preflight
+### Step 1 — Authentication
 
-Verify az CLI is available and authenticated:
-
-```powershell
-az account show --query "{name:name, tenantId:tenantId, subscriptionId:id}" -o json
-```
-
-If this fails, halt:
-```
-az CLI is not authenticated. Run: az login
-```
+Follow the steps in `${CLAUDE_PLUGIN_ROOT}/skills/shared/_az-auth.md`. Complete that flow fully before continuing.
 
 Print the active account name, tenant ID, and subscription ID so the user can confirm they are in the correct tenant before proceeding.
 

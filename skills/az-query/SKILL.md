@@ -36,53 +36,11 @@ Environment:
 
 Then stop and wait.
 
-## Step 0: Credential check
+## Step 0: Authentication
 
 **This is the very first check — run it before parsing the query or doing anything else.**
 
-1. Determine the target environment from the user's query (default: `prod`). Look for keywords like "qa", "in qa", "on qa" to switch to `qa`.
-2. Discover credential files for the target environment:
-   ```bash
-   ls "$USERPROFILE/.azure/"*"-credentials-<env>.ps1" 2>/dev/null
-   ```
-3. **No files found** — stop immediately and tell the user:
-   ```
-   No credential file found for environment: <env>
-
-   Create %USERPROFILE%\.azure\<tenant>-credentials-<env>.ps1 with:
-
-   $env:ARM_CLIENT_ID = "<Azure_Client_ID>"
-   $env:ARM_CLIENT_SECRET = "<Azure_Client_Secret>"
-   $env:ARM_TENANT_ID = "<Azure_Tenant_ID>"
-   $env:ARM_SUBSCRIPTION_ID = "<Azure_Subscription_ID>"
-
-   Where <tenant> is a short name for the Azure tenant (e.g. "rise", "perso").
-   ```
-   Do NOT proceed.
-
-4. **Exactly one file found** — use it automatically. Extract the tenant name from the filename (the part before `-credentials-<env>.ps1`) and store it as `<tenant>`. Announce: `Using tenant: <tenant>`
-
-5. **Multiple files found** — list them and ask the user which tenant to use via `AskUserQuestion`. Wait for the answer before proceeding.
-## Credential loading
-
-Once the credential file is resolved, parse and authenticate:
-
-1. Extract the values (replace `<resolved-file>` with the full path of the selected credential file):
-   ```bash
-   ARM_CLIENT_ID=$(grep 'ARM_CLIENT_ID' "<resolved-file>" | sed 's/.*= *"//' | sed 's/".*//')
-   ARM_CLIENT_SECRET=$(grep 'ARM_CLIENT_SECRET' "<resolved-file>" | sed 's/.*= *"//' | sed 's/".*//')
-   ARM_TENANT_ID=$(grep 'ARM_TENANT_ID' "<resolved-file>" | sed 's/.*= *"//' | sed 's/".*//')
-   ARM_SUBSCRIPTION_ID=$(grep 'ARM_SUBSCRIPTION_ID' "<resolved-file>" | sed 's/.*= *"//' | sed 's/".*//')
-   ```
-2. Log in with the service principal:
-   ```bash
-   az login --service-principal -u "$ARM_CLIENT_ID" -p "$ARM_CLIENT_SECRET" --tenant "$ARM_TENANT_ID" --output none 2>&1
-   ```
-   If login fails, show the error and stop.
-3. Set the subscription:
-   ```bash
-   az account set --subscription "$ARM_SUBSCRIPTION_ID" 2>&1
-   ```
+Follow the steps in `${CLAUDE_PLUGIN_ROOT}/skills/shared/_az-auth.md`. Complete that flow fully before continuing.
 
 ## Naming convention
 
@@ -213,6 +171,5 @@ Resource: <resolved_name>
 - **Never show secret values.** Only list secret names, expiry dates, and enabled status.
 - **Never modify app registrations** — no creating secrets, no changing redirect URIs, no updating permissions.
 - **Never run destructive commands** — no `az ad app delete`, no `az keyvault secret purge`, nothing that mutates state.
-- **Always log out after the query** — do NOT leave the service principal session active. Run `az logout --output none 2>&1` at the end. This is critical to avoid polluting the user's `az` session.
 - **If a command fails**, show the error and suggest what might be wrong (wrong project name, missing permissions, resource doesn't exist in this environment).
 - **If the query is ambiguous**, ask the user to clarify rather than guessing. Use `AskUserQuestion` with options when there are a small number of possibilities.
