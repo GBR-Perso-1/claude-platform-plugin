@@ -1,5 +1,5 @@
 ---
-name: repo-set-context
+name: devbox-set-context
 description: "Manage the user-level contexts.json manifest — create, validate, sync, and add context entries that describe your GitHub/Azure accounts."
 ---
 
